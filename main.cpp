@@ -2,16 +2,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CAPACITY 40
-#define COOKERS 6
+#define CAPACITY 30
+#define KITCHEN_SLOTS 6
+#define WAITERS 2
 
 Histogram dobaVSystemu("Celkova doba v systemu", 0, 40, 20);
 Store restaurant("Store restaurant whit maximal capacity", CAPACITY);
-Store kitchen("Store restaurant whit maximal capacity", COOKERS);
+Store kitchen("Store restaurant whit maximal capacity", KITCHEN_SLOTS);
 Facility waiter("Waiter who receive orders");
 Facility waiter_2("Waiter who distributes food");
+Facility waiters[WAITERS];
 Queue waitForSoup;
 Queue waitForMainCourse;
+
 int i = 0;
 
 
@@ -30,7 +33,7 @@ public:
 	void Behavior() {
 		// printf("New foot\n");
 		Enter(kitchen);
-		printf("Enter\n");
+		// printf("Enter\n");
 		if (isSoup) {
 			Wait(Uniform(100,200));
 		} else {
@@ -38,25 +41,37 @@ public:
 		}
 
 		Leave(kitchen);
-
-
-		Seize(waiter_2);
-
-		if (!manualyActivate){
-			// printf("On way\n");
-			Wait(Uniform(5,10));
-			if (waiter_2.Q1->Length() > 0){
-				// printf("Get 2 meal\n");
-				Food * meal = (Food *)waiter_2.Q1->GetFirst();
-				meal->manualyActivate = true;
-				meal->Activate();
+		int who = -1;
+		if (waiters[1].Busy()) {
+			for (int i = 0; i < WAITERS; i++) {
+				if (!waiters[i].Busy()) {
+					who = i;
+					Seize(waiters[i]);
+					break;
+				}
 			}
-			Release(waiter_2);
+		}
+		if (who == -1) {
+			who = 1;
+			printf("Seize obsluha jedla na stol: %d\n", waiters[who].Q1->Length());
+			Seize(waiters[who], 1);
+		}
+	
+		if (!manualyActivate){
+			if (waiters[1].Q1->Length() > 0){
+				printf("Get 2 meal\n");
+				Food * meal = (Food *)waiters[1].Q1->GetFirst();
+				meal->manualyActivate = true;
+				Wait(Uniform(20,25));
+				meal->Activate();
+			} else {
+				Wait(Uniform(15,20));
+			}
+			Release(waiters[who]);
 	 	}
 	 	if ( isSoup ){
-	 		printf("Queue waitForSoup : %d\n", waitForSoup.Length());
 			waitForSoup.GetFirst()->Activate();
-			printf("Queue waitForSoup : %d\n", waitForSoup.Length());
+	
 		} else {
 			waitForMainCourse.GetFirst()->Activate();
 		}
@@ -64,13 +79,23 @@ public:
 };
 
 class Order : public Process {
+public:
+	int whoWaiter;
+
+	Order(int who) : Process() {
+		whoWaiter = who;
+	}
+
 	void Behavior() {
 		//TODO may be interupted
 		// printf("New order\n");
-		Seize(waiter,1);
+		printf("Before Seize get order: %d\n", waiters[whoWaiter].Q1->Length());
+		Seize(waiters[whoWaiter], 2);
+		Wait(Uniform(10,20));
 		(new Food(true))->Activate();
 		(new Food(false))->Activate();
-		Release(waiter);
+		Release(waiters[whoWaiter]);
+		printf("After Seize get order: %d\n", waiters[whoWaiter].Q1->Length());
 	}
 };
 
@@ -85,12 +110,26 @@ class Guest : public Process {
 			// printf("Im here\n");
 			Wait(Uniform(15,40));	
 			Wait(Uniform(80,150));
-
+			int who = -1;
+			if (waiters[0].Busy()) {
+				for (int i = 1; i < WAITERS; i++) {
+					if (!waiters[i].Busy()) {
+						who = i;
+						printf("Zakakujem: %d   0\n", waiters[i].Q1->Length());
+						Seize(waiters[i]);
+						break;
+					}
+				}
+			}
+			if (who == -1) {
+				who = 0;
+				printf("Seize objednavanie: %d   0\n", waiters[0].Q1->Length());
+				Seize(waiters[0], 3);
+			}
 		
-			Seize(waiter, 2);
 			Wait(Uniform(20,30));	
-			(new Order)->Activate();	//make order
-			Release(waiter);
+			(new Order(who))->Activate();	//make order
+			Release(waiters[who]);
 
 			// printf("Wait for soup ...\n");
 
@@ -103,29 +142,35 @@ class Guest : public Process {
 			Passivate();
 			Wait(Uniform(600,1000));		//eating main course
 
-	
-			if (!waiter.Busy()) {
-				Seize(waiter, 3);
-				Wait(Uniform(20,60));	
-				Release(waiter);
-			} else if(!waiter_2.Busy()){
-				Seize(waiter_2);
-				Wait(Uniform(20,60));	
-				Release(waiter_2);
-			} else {
-				Seize(waiter, 3);
-				Wait(Uniform(20,60));	
-				Release(waiter);
+			
+			who = -1;
+			if (waiters[0].Busy()) {
+				for (int i = 1; i < WAITERS; i++) {
+					if (!waiters[i].Busy()) {
+						who = i;
+						Seize(waiters[i]);
+						break;
+					}
+				}
 			}
+			printf("Platenie Who %d    %d\n", who,waiters[0].Q1->Length() );
+			if (who == -1) {
+				who = 0;
+				Seize(waiters[who], 3);
+			}
+			Wait(Uniform(20,60));	
+			Release(waiters[who]);
 
-			// printf("Thank you by\n");
+			
+
+			printf("Thank you by\n");
 			Leave(restaurant);
 			dobaVSystemu(Time - tvstup);
 		} else {
 			 
 			 i++;
 		}
-		printf("Leave !!! %d\n", i);
+		// printf("Leave !!! %d\n", i);
 
 	}
 };
@@ -134,7 +179,7 @@ class Guest : public Process {
 class Generator : public Event { 
     void Behavior() {
         (new Guest)->Activate();
-        Activate(Time + Uniform(0,150)); 
+        Activate(Time + Uniform(0,40)); 
     }
 };
 
