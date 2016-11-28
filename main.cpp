@@ -4,18 +4,25 @@
 
 #define CAPACITY 30
 #define KITCHEN_SLOTS 6
-#define WAITERS 2
+
+int WAITERS_SIZE;
+int KITCH_SUPE_SIZE;
+int KITCH_MAIN_COUR_SIZE;
+Facility *waiters;
 
 Histogram dobaVSystemu("Celkova doba v systemu", 0, 900, 16);
 Histogram waitingForSoup("Wait for sup", 0, 900, 16);
 
-Store restaurant("Store represented restaurant whit maximal capacity", CAPACITY);
-Store soupKitchem("Store represented restaurant whit maximal capacity", 3);
-Store mainCourseKitchen("Store represented parallel prepar food in kitchen", 5);
+Store restaurant("Store represented restaurant whit maximal capacity", 0);
+Store soupKitchem("Soup kitchen represented how many soups can be done in parallel  ", 0);
+Store mainCourseKitchen("Store represented parallel prepar food in kitchen", 0);
+
 Stat waiter1("Waiter 1");
 Stat waiter2("Waiter 2");
 Stat waitFotMainCourse("Waiter 2");
-Facility waiters[WAITERS];
+
+
+
 Queue waitForSoup;
 Queue waitForMainCourse;
 Queue orders;
@@ -51,7 +58,7 @@ public:
         }
         int who = -1;
         if (waiters[1].Busy()) {
-            for (int i = 0; i < WAITERS; i++) {
+            for (int i = 0; i < WAITERS_SIZE; i++) {
                 if (!waiters[i].Busy()) {
                     who = i;
                     Seize(waiters[i]);
@@ -164,9 +171,6 @@ public:
 };
 
 
-
-
-
 class Guest : public Process {
     void Behavior() {
         if( !restaurant.Full() ){
@@ -189,7 +193,7 @@ class Guest : public Process {
 
             int who = -1;
             if (waiters[0].Busy()) {
-                for (int i = 1; i < WAITERS; i++) {
+                for (int i = 1; i < WAITERS_SIZE; i++) {
                     if (!waiters[i].Busy()) {
                         who = i;
                         Seize(waiters[i]);
@@ -228,7 +232,7 @@ class Guest : public Process {
             }
             who = -1;
             if (waiters[0].Busy()) {
-                for (int i = 1; i < WAITERS; i++) {
+                for (int i = 1; i < WAITERS_SIZE; i++) {
                     if (!waiters[i].Busy()) {
                         who = i;
                         Seize(waiters[i]);
@@ -287,6 +291,8 @@ class Generator : public Event {
 int main(){
     int numbOfExperiment = 0; 
     scanf("%d",&numbOfExperiment);
+    
+   
     //RandomSeed(Time(NULL));
 
 
@@ -296,15 +302,18 @@ int main(){
         /* node  */
         /* -----------------------------------------------*/
         case 0:
-            // printf("0. Test starting ... ");
+            printf("0. Test starting ... ");
+            WAITERS_SIZE = 2;
+
+            restaurant.SetCapacity(30);
+            soupKitchem.SetCapacity(3);
+            mainCourseKitchen.SetCapacity(5);
+
+            KITCH_MAIN_COUR_SIZE = 3;
+            waiters = new Facility[WAITERS_SIZE];
             Init(0, 14400);
-            //
             (new Generator)->Activate();
             Run();
-
-
-
-
             break;
         /* ---------------------------------------------- */
         /*              EXPERIMENT 1                      */
@@ -312,21 +321,34 @@ int main(){
         /* -----------------------------------------------*/
         case 1:
             printf("1. Experiment starting ... ");
+            WAITERS_SIZE = 3;
+          
+            restaurant.SetCapacity(30);
+            soupKitchem.SetCapacity(3);
+            mainCourseKitchen.SetCapacity(5);
 
-
-
-
+            waiters = new Facility[WAITERS_SIZE];
+            Init(0, 14400);
+            (new Generator)->Activate();
+            Run();
             break;
         /* ---------------------------------------------- */
         /*              EXPERIMENT 2                      */
         /* node  */
         /* -----------------------------------------------*/
         case 2:
-            printf("2. Experiment starting ... ");
+            WAITERS_SIZE = 2;
+           
+            restaurant.SetCapacity(40);
+            soupKitchem.SetCapacity(3);
+            mainCourseKitchen.SetCapacity(5);
 
-
-
+            waiters = new Facility[WAITERS_SIZE];
+            Init(0, 14400);
+            (new Generator)->Activate();
+            Run();
             break;
+
         /* ---------------------------------------------- */
         /*              EXPERIMENT 3                      */
         /* node  */
@@ -402,12 +424,8 @@ int main(){
     printf("Counter of prepared drinks: %d\n", drinks);
     printf("Leave people:  %d\n", counterLeavs);
     printf("Zisk:  %d\n", (counterSoup * 15) + (counterMainCourses * 70) + drinks * 30);
+   
 
-    
-    printf("e: %f\n", Exponential(100) );
-    printf("e: %f\n", Exponential(0.1) );
-    printf("e: %f\n", Exponential(1) );
-    printf("e: %f\n", Exponential(2) );
 
 }
 
