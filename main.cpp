@@ -3,6 +3,11 @@
 #include <string.h>
 #include <time.h>
 
+#include <iostream>
+#include <string>
+#include <sstream>
+
+using namespace std;
 
 #define CAPACITY 30
 #define KITCHEN_SLOTS 6
@@ -11,10 +16,14 @@
 #define MAIN_COURSE 1
 #define SOUP 2
 
+
 int WAITERS_SIZE;
 
 
 int HOW_MANY_PLATES_WAITER_GET ;
+int IMPRUVE_FOOD_QUALITY;
+bool DIGITAL_MENU_SYSTEM;
+
 Facility *waiters;
 
 
@@ -69,7 +78,7 @@ public:
         } else {
             Enter(mainCourseKitchen);
             counterMainCourses++;
-            Wait(Uniform(400,500));
+            Wait(Uniform(400 + IMPRUVE_FOOD_QUALITY, 500 + IMPRUVE_FOOD_QUALITY));
             Leave(mainCourseKitchen);
         }
     }
@@ -86,7 +95,6 @@ public:
         Passivate();
         Wait(Uniform(10,20));
         Release(waiters[indexActWaiter]);
-        printf("Som tu :%d\n", personsProcess.Length());
         while(personsProcess.Length() > 0){
             personsProcess.GetFirst()->Activate();
         }
@@ -95,12 +103,12 @@ public:
 
 class Order : public Process {
 public:
-    int whoWaiter;
+    int whoTakeOrder;
     bool manuallyFree;
     int foodCombo;
 
     Order(int who, int foodCombination) : Process() {
-        whoWaiter = who;
+        whoTakeOrder = who;
         manuallyFree = false;
         foodCombo = foodCombination;
     }
@@ -115,19 +123,37 @@ public:
         }
     }
 
-    void Behavior() {
-        //TODO may be interupted
-
-        // printf("New\n");
-        Seize(waiters[whoWaiter], 1);
-        activateFood(foodCombo);
-        Wait(Uniform(4 , 6 ));
-        if (Random() < 0.40){
-            drinks++;
-            Wait(Uniform(60 , 100));
+    int findFreeWaiter() {
+        int minQLen = 100;
+        int bestWaiter = -1;
+        for (int i = 0; i < WAITERS_SIZE; i++) {
+            if ((int) waiters[i].QueueLen() < minQLen) {
+                bestWaiter = i;
+                minQLen = waiters[i].QueueLen();
+            }
         }
-       
-        Release(waiters[whoWaiter]);
+        return bestWaiter;
+    }
+
+    void Behavior() {
+        if (DIGITAL_MENU_SYSTEM){
+            activateFood(foodCombo);
+            if (Random() < 0.40){
+                int bestWaiter = findFreeWaiter();
+                Seize(waiters[bestWaiter]);
+                drinks++;
+                Wait(Uniform(60 , 100));
+                Release(waiters[bestWaiter]);
+            }
+        } else {
+            Seize(waiters[whoTakeOrder], 1);
+            activateFood(foodCombo);
+            if (Random() < 0.40){
+                drinks++;
+                Wait(Uniform(60 , 100));
+            }
+            Release(waiters[whoTakeOrder]);
+        }
     }
 };
 
@@ -179,16 +205,6 @@ public:
         return who;
     }
 
-    /**
-    * Method represents the conversation between a waiter and a guest.
-    * @return Index of waiter who handles a guest process
-    */
-    void makeOrder(int who, int foodCombo){
-        Wait(Uniform(5,15));    // Make conversation with a waiter (creating an order)
-
-        (new Order(who, foodCombo))->Activate();    //Make an order
-        Release(waiters[who]);
-    }
 
     void consumingFood(int foodCombo){
         if (!(foodCombo == 1)){
@@ -209,6 +225,7 @@ public:
     }
 
     void Behavior() {
+        int who;
         if( !restaurant.Full() ){
             int enterToSystem = Time;
             
@@ -216,10 +233,15 @@ public:
 
             Wait(Uniform(15,40));           //time to sit down
             int foodCombo = selectingFood();
-
-            int who = findingFreeWaiter(0);
-
-            makeOrder(who, foodCombo);
+            if (DIGITAL_MENU_SYSTEM){
+               (new Order(-1, foodCombo))->Activate();
+            } else {
+                who = findingFreeWaiter(0);
+                Wait(Uniform(5,15));    // Make conversation with a waiter (creating an order)
+                (new Order(who, foodCombo))->Activate();    //Make an order
+                Release(waiters[who]);
+            }
+            
 
             consumingFood(foodCombo);
             int timeBefore = Time;
@@ -286,7 +308,7 @@ class PreparedFoodWatchDog : public Event {
 
         if (preparedSoups.Length() > 0 || preparedMainCourses.Length() > 0){
             for (int i = 0; i < WAITERS_SIZE; i++) {
-                if (waiters[i].QueueLen() < 4) {
+                if (waiters[i].QueueLen() < 3) {
                     int counter = 0;
 
                     while (counter < HOW_MANY_PLATES_WAITER_GET){
@@ -328,18 +350,28 @@ class PreparedFoodWatchDog : public Event {
     }
 };
 
+int input(int value){
+    string input;
+    getline(cin,input);
+    if ( !input.empty() ) {
+        istringstream stream( input );
+        stream >> value;
+    }
+    return value;
+}
 
 
-int main(){
+int main(){  
+     
     int experimentNumber = 0;
     printf("Enter experiment number: ");
-    scanf("%d",&experimentNumber);
+    experimentNumber = input(0);
     RandomSeed(time(NULL));
     srand(time(NULL));
 
     //RandomSeed(Time(NULL));
 
-
+   
     switch(experimentNumber){
         /* ---------------------------------------------- */
         /*              TEST 0                            */
@@ -349,10 +381,13 @@ int main(){
 
             WAITERS_SIZE = 2;
             HOW_MANY_PLATES_WAITER_GET = 2;
+            DIGITAL_MENU_SYSTEM = false;
+            IMPRUVE_FOOD_QUALITY = 0;
 
             restaurant.SetCapacity(30);
             soupKitchen.SetCapacity(2 * 2);
             mainCourseKitchen.SetCapacity(2 * 3);
+            
 
             waiters = new Facility[WAITERS_SIZE];
             Init(0, 14400);
@@ -372,16 +407,18 @@ int main(){
             int countPlates;
 
             printf("Enter capacity of restaurant (defalult value = 30): ");
-            scanf("%d",&capacity);
+            capacity = input(30);
             printf("Enter count of waiters in the restaurant (default value = 2): ");
-            scanf("%d",&countWaiters);
+            countWaiters = input(2);
             printf("Enter count of cookers in the kitchen (default value = 2): ");
-            scanf("%d",&countCookers);
+            countCookers = input(2);
             printf("Enter count of plates, waiter can carry at the same time (default value = 2): ");
-            scanf("%d",&countPlates);
+            countPlates = input(2);
 
             WAITERS_SIZE = countWaiters;
             HOW_MANY_PLATES_WAITER_GET = countPlates;
+            DIGITAL_MENU_SYSTEM = false;
+            IMPRUVE_FOOD_QUALITY = 0;
 
             restaurant.SetCapacity(capacity);
             soupKitchen.SetCapacity(countCookers * 2);
@@ -398,23 +435,42 @@ int main(){
         /*              EXPERIMENT 5                      */
         /* node  */
         /* -----------------------------------------------*/
-        case 5:
-            printf("5. Experiment starting ... ");
+        case 2:
+            WAITERS_SIZE = 2;
+            HOW_MANY_PLATES_WAITER_GET = 2;
+            DIGITAL_MENU_SYSTEM = true;
+            IMPRUVE_FOOD_QUALITY = 0;
 
-
-
-
+            restaurant.SetCapacity(50);
+            soupKitchen.SetCapacity(3 * 2);
+            mainCourseKitchen.SetCapacity(3 * 3);
+            
+            waiters = new Facility[WAITERS_SIZE];
+            Init(0, 14400);
+            (new Generator)->Activate();
+            (new PreparedFoodWatchDog)->Activate();
+            Run();
             break;
+
         /* ---------------------------------------------- */
         /*              EXPERIMENT 6                      */
         /* node  */
         /* -----------------------------------------------*/
-        case 6:
-            printf("6. Experiment starting ... ");
+        case 3:
+            WAITERS_SIZE = 2;
+            HOW_MANY_PLATES_WAITER_GET = 2;
+            DIGITAL_MENU_SYSTEM = true;
+            IMPRUVE_FOOD_QUALITY = 60;
 
-
-
-
+            restaurant.SetCapacity(30);
+            soupKitchen.SetCapacity(2 * 2);
+            mainCourseKitchen.SetCapacity(2 * 3);
+            
+            waiters = new Facility[WAITERS_SIZE];
+            Init(0, 14400);
+            (new Generator)->Activate();
+            (new PreparedFoodWatchDog)->Activate();
+            Run();
             break;
         /* ---------------------------------------------- */
         /*              EXPERIMENT 7                      */
