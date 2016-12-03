@@ -73,7 +73,7 @@ public:
         if (isSoup) {
             Enter(soupKitchen);
             counterSoup++;
-            Wait(Uniform(100,200));
+            Wait(Uniform(15, 30));
             Leave(soupKitchen);
         } else {
             Enter(mainCourseKitchen);
@@ -310,7 +310,6 @@ class PreparedFoodWatchDog : public Event {
             for (int i = 0; i < WAITERS_SIZE; i++) {
                 if (waiters[i].QueueLen() < 3) {
                     int counter = 0;
-
                     while (counter < HOW_MANY_PLATES_WAITER_GET){
                         //printf(" Indesx %d\n",i );
                         if (preparedSoups.Length() > 0 && waitForSoup.Length() > 0){
