@@ -41,6 +41,7 @@ Stat waiter2("Counter of waiting processes to be handled by WAITER1");
 
 Stat guestLife("How much time a guest has spent in the restaurant");
 
+Stat test("dddd");
 
 
 Queue waitForSoup;
@@ -92,8 +93,13 @@ public:
         } else {
             Into(preparedMainCourses);
         }
+        int zzz= Time;
         Passivate();
+        Seize(waiters[indexActWaiter], 1);
+
+        test(Time -zzz );
         Wait(Uniform(10,20));
+        printf("Uvolnujem : %d\n ", indexActWaiter);
         Release(waiters[indexActWaiter]);
         while(personsProcess.Length() > 0){
             personsProcess.GetFirst()->Activate();
@@ -307,41 +313,60 @@ class PreparedFoodWatchDog : public Event {
         Food * main_food;
 
         if (preparedSoups.Length() > 0 || preparedMainCourses.Length() > 0){
+            int minQLen = 100;
+            int noBusyW;
             for (int i = 0; i < WAITERS_SIZE; i++) {
-                if (waiters[i].QueueLen() < 3) {
-                    int counter = 0;
-                    while (counter < HOW_MANY_PLATES_WAITER_GET){
-                        //printf(" Indesx %d\n",i );
-                        if (preparedSoups.Length() > 0 && waitForSoup.Length() > 0){
-                            if(counter == 0){
-                                main_food = (Food *)preparedSoups.GetFirst();
-                                main_food->indexActWaiter = i;
-                                main_food->personsProcess.InsFirst(waitForSoup.GetFirst());
-                            } else {
-                                main_food->personsProcess.InsFirst(waitForSoup.GetFirst());
-                                preparedSoups.GetFirst()->Cancel();
-                            }
-                            counter++;
-                        } else if (preparedMainCourses.Length() > 0 && waitForMainCourse.Length() > 0){
-                            if(counter == 0){
-                                main_food = (Food *)preparedMainCourses.GetFirst();
-                                main_food->indexActWaiter = i;
-                                main_food->personsProcess.InsFirst(waitForMainCourse.GetFirst());
-                            } else {
-                                main_food->personsProcess.InsFirst(waitForMainCourse.GetFirst());
-                                preparedMainCourses.GetFirst()->Cancel();
-                            }
-                            counter++;
-                        }  else {
-                            break;
-                        }
-                    }
-                    if (counter > 0){
-                        waiters[i].QueueIn(main_food, 4);
-                    }
-                    break;
+                // printf("%d  ", waiters[i].QueueLen());
+                // printf("%d\n", i);
+                if((int) waiters[i].QueueLen() < minQLen){
+                    minQLen = waiters[i].QueueLen();
+                    noBusyW = i;
                 }
+
             }
+            //  printf("------------------------------\n");
+            // printf("minLen : %d\n", minQLen);
+            // printf("index : %d\n", noBusyW);
+
+            if (minQLen < 3) {
+                int counter = 0;
+                while (counter < HOW_MANY_PLATES_WAITER_GET){
+                    //printf(" Indesx %d\n",i );
+                    if (preparedSoups.Length() > 0 && waitForSoup.Length() > 0){
+                        if(counter == 0){
+                            main_food = (Food *)preparedSoups.GetFirst();
+                          
+                            main_food->indexActWaiter = noBusyW;
+                            main_food->personsProcess.InsFirst(waitForSoup.GetFirst());
+                        } else {
+                            main_food->personsProcess.InsFirst(waitForSoup.GetFirst());
+                            preparedSoups.GetFirst()->Cancel();
+                        }
+                        counter++;
+                    } else if (preparedMainCourses.Length() > 0 && waitForMainCourse.Length() > 0){
+                        if(counter == 0){
+                            main_food = (Food *)preparedMainCourses.GetFirst();
+                           
+                            main_food->indexActWaiter = noBusyW;
+                            main_food->personsProcess.InsFirst(waitForMainCourse.GetFirst());
+                        } else {
+                            main_food->personsProcess.InsFirst(waitForMainCourse.GetFirst());
+                            preparedMainCourses.GetFirst()->Cancel();
+                        }
+                        counter++;
+                    }  else {
+                        break;
+                    }
+                }
+                if (counter > 0){
+                   main_food->Activate();
+                   
+                }
+    
+            } else {
+                printf("Dejem sa\n");
+            }
+            
         }
 
         Activate(Time + 1);
@@ -415,6 +440,7 @@ int main(){
             countPlates = input(2);
 
             WAITERS_SIZE = countWaiters;
+
             HOW_MANY_PLATES_WAITER_GET = countPlates;
             DIGITAL_MENU_SYSTEM = false;
             IMPRUVE_FOOD_QUALITY = 0;
@@ -499,12 +525,14 @@ int main(){
     waitingForMainCourse.Output();
     waitingForPay.Output();
     guestLife.Output();
+    test.Output();
     //kitchen.Output();
     printf("Counter of prepared soups: %d\n", counterSoup);
     printf("Counter of prepared main courses: %d\n", counterMainCourses);
     printf("Counter of prepared drinks: %d\n", drinks);
     printf("Leave people:  %d\n", counterLeavs);
     printf("Profit:  %d\n", (counterSoup * 15) + (counterMainCourses * 70) + drinks * 30);
+    printf("%d\n", WAITERS_SIZE);
 
 
 
