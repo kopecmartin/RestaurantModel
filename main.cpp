@@ -536,7 +536,7 @@ int main(){
             printf("Enter count of plates, waiter can carry at the same time (default value = 2): ");
             countPlates = input(2);
             int i ;
-            for(i = 0; i < 20; i++){
+            for(i = 0; i < 1; i++){
                
                 
                 WAITERS_SIZE = countWaiters;
@@ -554,6 +554,7 @@ int main(){
                 (new PreparedFoodWatchDog)->Activate();
                 Run();
 
+            
                 maxTimeInSystem += guestLife.Max();
                 minTimeInSystem += guestLife.Min();
                 avgTimeInSystem += guestLife.Sum() /  guestLife.Number();
@@ -601,25 +602,25 @@ int main(){
                 test.Clear();
             }
             printf("\n------------ AVG vaues OF SYSTEM -------------\n");
-            printf("AVG max time in system %g  (iterations %d)\n", maxTimeInSystem / (i+1), i);
-            printf("AVG min time in system %g   (iterations %d)\n", minTimeInSystem / (i+1), i);
-            printf("AVG of AVG time in system %g   (iterations %d)\n", avgTimeInSystem / (i+1), i);
-            printf("AVG count of people in system %g   (iterations %d)\n", countOfPeoples / (i+1), i);
-            printf("AVG drinks %g   (iterations %d)\n", countOfDrinks / (i+1), i);
-            printf("AVG profit %g   (iterations %d)\n", profit / (i+1), i);
+            printf("AVG max time in system %g  (iterations %d)\n", maxTimeInSystem / (i), i);
+            printf("AVG min time in system %g   (iterations %d)\n", minTimeInSystem / (i), i);
+            printf("AVG of AVG time in system %g   (iterations %d)\n", avgTimeInSystem / (i), i);
+            printf("AVG count of people in system %g   (iterations %d)\n", countOfPeoples / (i), i);
+            printf("AVG drinks %g   (iterations %d)\n", countOfDrinks / (i), i);
+            printf("AVG profit %g   (iterations %d)\n", profit / (i), i);
 
 
             printf("\n------------ AVG vaues waiting of supe -------------\n");
-            printf("AVG max time  %g  (iterations %d)\n", supeMaxTime / (i+1), i);
-            printf("AVG min time  %g   (iterations %d)\n", supeMinTime / (i+1), i);
-            printf("AVG of AVG time  %g   (iterations %d)\n", supeAvgTime / (i+1), i);
-            printf("AVG count of supe  %g   (iterations %d)\n", countOfSupe / (i+1), i);
+            printf("AVG max time  %g  (iterations %d)\n", supeMaxTime / (i), i);
+            printf("AVG min time  %g   (iterations %d)\n", supeMinTime / (i), i);
+            printf("AVG of AVG time  %g   (iterations %d)\n", supeAvgTime / (i), i);
+            printf("AVG count of supe  %g   (iterations %d)\n", countOfSupe / (i), i);
 
             printf("\n------------ AVG vaues waiting of main course -------------\n");
-            printf("AVG max time  %g  (iterations %d)\n", mcMaxTime / (i+1), i);
-            printf("AVG min time  %g   (iterations %d)\n", mcMinTime / (i+1), i);
-            printf("AVG of AVG time  %g   (iterations %d)\n", mcAvgTime / (i+1), i);
-            printf("AVG count of supe  %g   (iterations %d)\n", countOfMc / (i+1), i);
+            printf("AVG max time  %g  (iterations %d)\n", mcMaxTime / (i), i);
+            printf("AVG min time  %g   (iterations %d)\n", mcMinTime / (i), i);
+            printf("AVG of AVG time  %g   (iterations %d)\n", mcAvgTime / (i), i);
+            printf("AVG count of supe  %g   (iterations %d)\n", countOfMc / (i), i);
 
 
 
