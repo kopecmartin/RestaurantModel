@@ -7,8 +7,6 @@
 #include <string>
 #include <sstream>
 
-using namespace std;
-
 #define CAPACITY 30
 #define KITCHEN_SLOTS 6
 
@@ -16,17 +14,14 @@ using namespace std;
 #define MAIN_COURSE 1
 #define SOUP 2
 
+using namespace std;
+
 
 int WAITERS_SIZE;
-
-
-int HOW_MANY_PLATES_WAITER_GET ;
+int HOW_MANY_PLATES_WAITER_GET;
 bool DIGITAL_MENU_SYSTEM;
 
 Facility *waiters;
-
-
-
 
 Store restaurant("Store represents maximal capacity of a restaurant", 0);
 Store soupKitchen("Store represents how many soups can be done at the same time", 0);
@@ -37,16 +32,12 @@ Stat waitingForSoup("Waiting for a soup");
 Stat waitingForPay("Waiting to pay");
 Stat waiter1("Counter of waiting processes to be handled by WAITER0");
 Stat waiter2("Counter of waiting processes to be handled by WAITER1");
-
 Stat guestLife("How much time a guest has spent in the restaurant");
-
-
 
 Queue waitForSoup;
 Queue waitForMainCourse;
 
-
-Queue preparedSoups ;
+Queue preparedSoups;
 Queue preparedMainCourses;
 
 int counterLeavs = 0;
@@ -54,13 +45,16 @@ int drinks = 0;
 class Guest;
 
 
-
+/**
+ *
+ */
 class Food : public Process {
 public:
     bool manuallyActivate;
     bool isSoup;
     int indexActWaiter;
     Queue personsProcess;
+
     Food(bool soup) : Process() {
         isSoup = soup;
         manuallyActivate = false;
@@ -73,7 +67,7 @@ public:
             Leave(soupKitchen);
         } else {
             Enter(mainCourseKitchen);
-            Wait(Uniform(400 , 500 ));
+            Wait(Uniform(400, 500 ));
             Leave(mainCourseKitchen);
         }
     }
@@ -91,7 +85,7 @@ public:
         Seize(waiters[indexActWaiter], 1);
 
         Wait(Uniform(10,20));
-      
+
         Release(waiters[indexActWaiter]);
         while(personsProcess.Length() > 0){
             personsProcess.GetFirst()->Activate();
@@ -100,6 +94,10 @@ public:
     }
 };
 
+
+/**
+ *
+ */
 class Order : public Process {
 public:
     int whoTakeOrder;
@@ -141,7 +139,7 @@ public:
                 int bestWaiter = findFreeWaiter();
                 Seize(waiters[bestWaiter]);
                 drinks++;
-                Wait(Uniform(60 , 100));
+                Wait(Uniform(60, 100));
                 Release(waiters[bestWaiter]);
             }
         } else {
@@ -149,7 +147,7 @@ public:
             activateFood(foodCombo);
             if (Random() < 0.40){
                 drinks++;
-                Wait(Uniform(60 , 100));
+                Wait(Uniform(60, 100));
             }
             Release(waiters[whoTakeOrder]);
         }
@@ -204,7 +202,10 @@ public:
         return who;
     }
 
-
+    /**
+     * [consumingFood description]
+     * @param foodCombo [description]
+     */
     void consumingFood(int foodCombo){
         if (!(foodCombo == 1)){
             int soupTime = Time;
@@ -220,14 +221,16 @@ public:
             waitingForMainCourse(Time  - soupTime);
             Wait(Uniform(600,1200));        //eating main course
         }
-
     }
 
+    /**
+     * [Behavior description]
+     */
     void Behavior() {
         int who;
         if( !restaurant.Full() ){
             int enterToSystem = Time;
-            
+
             Enter(restaurant, 1);
 
             Wait(Uniform(15,40));           //time to sit down
@@ -240,7 +243,6 @@ public:
                 (new Order(who, foodCombo))->Activate();    //Make an order
                 Release(waiters[who]);
             }
-            
 
             consumingFood(foodCombo);
             int timeBefore = Time;
@@ -259,14 +261,12 @@ public:
             Leave(restaurant);
             guestLife(Time - enterToSystem);
 
-
         } else {
             counterLeavs++;
         }
-
-
     }
 };
+
 
 /**
  * Class generates guests in different time intervals
@@ -295,8 +295,9 @@ class Generator : public Event {
 };
 
 
-
-
+/**
+ *
+ */
 class PreparedFoodWatchDog : public Event {
 
     void Behavior() {
@@ -328,7 +329,7 @@ class PreparedFoodWatchDog : public Event {
                     if (preparedSoups.Length() > 0 && waitForSoup.Length() > 0){
                         if(counter == 0){
                             main_food = (Food *)preparedSoups.GetFirst();
-                          
+
                             main_food->indexActWaiter = noBusyW;
                             main_food->personsProcess.InsFirst(waitForSoup.GetFirst());
                         } else {
@@ -339,7 +340,7 @@ class PreparedFoodWatchDog : public Event {
                     } else if (preparedMainCourses.Length() > 0 && waitForMainCourse.Length() > 0){
                         if(counter == 0){
                             main_food = (Food *)preparedMainCourses.GetFirst();
-                           
+
                             main_food->indexActWaiter = noBusyW;
                             main_food->personsProcess.InsFirst(waitForMainCourse.GetFirst());
                         } else {
@@ -353,17 +354,19 @@ class PreparedFoodWatchDog : public Event {
                 }
                 if (counter > 0){
                    main_food->Activate();
-                   
                 }
             }
-            
         }
-
         Activate(Time + 1);
-
     }
 };
 
+
+/**
+ * [input description]
+ * @param  value [description]
+ * @return       [description]
+ */
 int input(int value){
     string input;
     getline(cin,input);
@@ -375,6 +378,9 @@ int input(int value){
 }
 
 
+/**
+ * [printStat description]
+ */
 void printStat(){
 
     waiter1.Output();
@@ -383,46 +389,56 @@ void printStat(){
     waitingForMainCourse.Output();
     waitingForPay.Output();
     guestLife.Output();
-   
+
     printf("Counter of prepared soups: %lu\n", waitingForSoup.Number());
     printf("Counter of prepared main courses: %lu\n", waitingForMainCourse.Number());
     printf("Counter of prepared drinks: %d\n", drinks);
-    printf("Leave people:  %d\n", counterLeavs);
-    printf("Profit:  %lu\n", ( waitingForSoup.Number() * 15) + (waitingForMainCourse.Number() * 70) + drinks * 30);
-
-
-
+    printf("Leave people: %d\n", counterLeavs);
+    printf("Profit: %lu\n", (waitingForSoup.Number() * 15) + (waitingForMainCourse.Number() * 70) + drinks * 30);
 }
 
 
+void printExperimentDescription(){
+    printf("Description of experiments:\n");
+    printf("Experiment number 0:\n");
+    printf("  - Run simulation with real parameters of the restaurant\n");
+    printf("Experiment number 1:\n");
+    printf("  - Run simulation with parameters you choose.\n");
+    printf("Experiment number 2:\n");
+    printf("  - Run\n");
+    printf("Experiment number 3:\n");
+    printf("  - Run\n");
+}
 
-int main(){  
-     
+
+int main(){
+
     int experimentNumber = 0;
+
+    printExperimentDescription();
     printf("Enter experiment number: ");
     experimentNumber = input(0);
+
     RandomSeed(time(NULL));
     srand(time(NULL));
 
     //RandomSeed(Time(NULL));
 
-   
+
     switch(experimentNumber){
         /* ---------------------------------------------- */
-        /*              TEST 0                            */
-        /* node  */
+        /*                 TEST 0                         */
+        /* note: Real parameters of the restaurant        */
         /* -----------------------------------------------*/
         case 0:
 
             WAITERS_SIZE = 2;
             HOW_MANY_PLATES_WAITER_GET = 2;
             DIGITAL_MENU_SYSTEM = false;
-          
 
             restaurant.SetCapacity(30);
             soupKitchen.SetCapacity(2 * 2);
             mainCourseKitchen.SetCapacity(2 * 3);
-            
 
             waiters = new Facility[WAITERS_SIZE];
             Init(0, 14400);
@@ -432,13 +448,14 @@ int main(){
             Run();
             printStat();
             break;
-        /* ---------------------------------------------- */
-        /*              EXPERIMENT 1                      */
-        /* node  */
-        /* -----------------------------------------------*/
+
+        /* ------------------------------------------------------- */
+        /*                     EXPERIMENT 1                        */
+        /* note: Experiment with restaurant parameters you choose. */
+        /* ------------------------------------------------------- */
         case 1:
-            int capacity ;
-            int countWaiters ;
+            int capacity;
+            int countWaiters;
             int countCookers;
             int countPlates;
 
@@ -452,59 +469,77 @@ int main(){
             countPlates = input(2);
 
             WAITERS_SIZE = countWaiters;
-
             HOW_MANY_PLATES_WAITER_GET = countPlates;
             DIGITAL_MENU_SYSTEM = false;
-           
 
             restaurant.SetCapacity(capacity);
             soupKitchen.SetCapacity(countCookers * 2);
             mainCourseKitchen.SetCapacity(countCookers * 3);
             waiters = new Facility[WAITERS_SIZE];
+
             Init(0, 14400);
             (new Generator)->Activate();
             (new PreparedFoodWatchDog)->Activate();
             Run();
+
             printStat();
             break;
 
-
-        /* ---------------------------------------------- */
-        /*              EXPERIMENT 5                      */
-        /* node  */
-        /* -----------------------------------------------*/
+        /* ----------------------------------------------------- */
+        /*                    EXPERIMENT 2                       */
+        /* note: Experiment with changable restaurant parameters.*/
+        /*       The same as experiment 1 but with electronic    */
+        /*       ordering system.                                */
+        /* ----------------------------------------------------- */
         case 2:
-            WAITERS_SIZE = 2;
-            HOW_MANY_PLATES_WAITER_GET = 2;
-            DIGITAL_MENU_SYSTEM = true;
-      
+            {
+                int capacity;
+                int countWaiters;
+                int countCookers;
+                int countPlates;
 
-            restaurant.SetCapacity(50);
-            soupKitchen.SetCapacity(3 * 2);
-            mainCourseKitchen.SetCapacity(3 * 3);
-            
-            waiters = new Facility[WAITERS_SIZE];
-            Init(0, 14400);
-            (new Generator)->Activate();
-            (new PreparedFoodWatchDog)->Activate();
-            Run();
-            break;
+                printf("Enter capacity of restaurant (defalult value = 50): ");
+                capacity = input(50);
+                printf("Enter count of waiters in the restaurant (default value = 3): ");
+                countWaiters = input(3);
+                printf("Enter count of cookers in the kitchen (default value = 3): ");
+                countCookers = input(3);
+                printf("Enter count of plates, waiter can carry at the same time (default value = 3): ");
+                countPlates = input(3);
 
- 
+                WAITERS_SIZE = countWaiters;
+                HOW_MANY_PLATES_WAITER_GET = countPlates;
+                DIGITAL_MENU_SYSTEM = true;
+
+                restaurant.SetCapacity(capacity);
+                soupKitchen.SetCapacity(countCookers * 2);
+                mainCourseKitchen.SetCapacity(countCookers * 3);
+                waiters = new Facility[WAITERS_SIZE];
+
+                Init(0, 14400);
+                (new Generator)->Activate();
+                (new PreparedFoodWatchDog)->Activate();
+                Run();
+
+                printStat();
+                break;
+            }
+
         /* ---------------------------------------------- */
-        /*              EXPERIMENT 7                      */
-        /* node  */
+        /*              EXPERIMENT 3                      */
+        /* note  */
         /* -----------------------------------------------*/
-        case 3:{
+        case 3:
+        {
             double maxTimeInSystem = 0;
             double minTimeInSystem = 0;
             double avgTimeInSystem = 0;
             double countOfPeoples = 0;
 
-            double supeMaxTime = 0;
-            double supeMinTime = 0;
-            double supeAvgTime = 0;
-            double countOfSupe = 0;
+            double soupMaxTime = 0;
+            double soupMinTime = 0;
+            double soupAvgTime = 0;
+            double countOfSoup = 0;
 
             double mcMaxTime = 0;
             double mcMinTime = 0;
@@ -514,10 +549,10 @@ int main(){
             double profit = 0;
 
             double countOfDrinks = 0;
+            double countPeopleLeft = 0;
 
-          
-            int capacity ;
-            int countWaiters ;
+            int capacity;
+            int countWaiters;
             int countCookers;
             int countPlates;
             int repeatCount;
@@ -532,35 +567,34 @@ int main(){
             countPlates = input(2);
             printf("Enter count of itreation (default value = 20): ");
             repeatCount = input(20);
-            int i ;
-            for(i = 0; i < repeatCount; i++){
-               
-                
-                WAITERS_SIZE = countWaiters;
 
+            int i;
+            for(i = 0; i < repeatCount; i++){
+
+                WAITERS_SIZE = countWaiters;
                 HOW_MANY_PLATES_WAITER_GET = countPlates;
                 DIGITAL_MENU_SYSTEM = false;
-               
 
                 restaurant.SetCapacity(capacity);
                 soupKitchen.SetCapacity(countCookers * 2);
                 mainCourseKitchen.SetCapacity(countCookers * 3);
                 waiters = new Facility[WAITERS_SIZE];
+
                 Init(0, 14400);
                 (new Generator)->Activate();
                 (new PreparedFoodWatchDog)->Activate();
                 Run();
 
-            
+
                 maxTimeInSystem += guestLife.Max();
                 minTimeInSystem += guestLife.Min();
                 avgTimeInSystem += guestLife.Sum() /  guestLife.Number();
-                countOfPeoples += guestLife.Number(); 
+                countOfPeoples += guestLife.Number();
 
-                supeMaxTime+= waitingForSoup.Max();
-                supeMinTime+= waitingForSoup.Min();
-                supeAvgTime+= waitingForSoup.Sum() / waitingForSoup.Number();
-                countOfSupe+= waitingForSoup.Number();
+                soupMaxTime+= waitingForSoup.Max();
+                soupMinTime+= waitingForSoup.Min();
+                soupAvgTime+= waitingForSoup.Sum() / waitingForSoup.Number();
+                countOfSoup+= waitingForSoup.Number();
 
                 mcMaxTime+= waitingForMainCourse.Max();
                 mcMinTime+= waitingForMainCourse.Min();
@@ -568,19 +602,23 @@ int main(){
                 countOfMc+= waitingForMainCourse.Number();
 
                 countOfDrinks += drinks;
-                profit +=  (waitingForSoup.Number() * 15) + (waitingForMainCourse.Number() * 70) + drinks * 30;
+                countPeopleLeft += counterLeavs;
 
-
-                
+                profit += waitingForSoup.Number() * 15;
+                profit += waitingForMainCourse.Number() * 70;
+                profit += drinks * 30;
 
 
                 drinks = 0;
+                counterLeavs = 0;
+
                 for (int i = 0; i < WAITERS_SIZE; i++) {
                     waiters[i].Clear();
                 }
+
                 waitForSoup.Clear();
                 waitForMainCourse.Clear();
-            
+
                 preparedSoups.Clear();
                 preparedMainCourses.Clear();
 
@@ -595,31 +633,30 @@ int main(){
                 waiter2.Clear();
 
                 guestLife.Clear();
-                
             }
-            printf("\n------------ AVG vaues OF SYSTEM -------------\n");
+
+            printf("\n------------ AVG values OF SYSTEM -------------\n");
             printf("AVG max time in system %g  (iterations %d)\n", maxTimeInSystem / (i), i);
-            printf("AVG min time in system %g   (iterations %d)\n", minTimeInSystem / (i), i);
-            printf("AVG of AVG time in system %g   (iterations %d)\n", avgTimeInSystem / (i), i);
-            printf("AVG count of people in system %g   (iterations %d)\n", countOfPeoples / (i), i);
-            printf("AVG drinks %g   (iterations %d)\n", countOfDrinks / (i), i);
-            printf("AVG profit %g   (iterations %d)\n", profit / (i), i);
+            printf("AVG min time in system %g  (iterations %d)\n", minTimeInSystem / (i), i);
+            printf("AVG of AVG time in system %g  (iterations %d)\n", avgTimeInSystem / (i), i);
+            printf("AVG count of people in system %g  (iterations %d)\n", countOfPeoples / (i), i);
+            printf("AVG people who left %g  (iterations %d)\n", countPeopleLeft / (i), i);
+            printf("AVG drinks %g  (iterations %d)\n", countOfDrinks / (i), i);
+            printf("AVG profit %g  (iterations %d)\n", profit / (i), i);
 
 
-            printf("\n------------ AVG vaues waiting of supe -------------\n");
-            printf("AVG max time  %g  (iterations %d)\n", supeMaxTime / (i), i);
-            printf("AVG min time  %g   (iterations %d)\n", supeMinTime / (i), i);
-            printf("AVG of AVG time  %g   (iterations %d)\n", supeAvgTime / (i), i);
-            printf("AVG count of supe  %g   (iterations %d)\n", countOfSupe / (i), i);
+            printf("\n------------ AVG values waiting of soup -------------\n");
+            printf("AVG max time  %g  (iterations %d)\n", soupMaxTime / (i), i);
+            printf("AVG min time  %g  (iterations %d)\n", soupMinTime / (i), i);
+            printf("AVG of AVG time  %g  (iterations %d)\n", soupAvgTime / (i), i);
+            printf("AVG count of soup  %g  (iterations %d)\n", countOfSoup / (i), i);
 
-            printf("\n------------ AVG vaues waiting of main course -------------\n");
+            printf("\n------------ AVG values waiting of main course -------------\n");
             printf("AVG max time  %g  (iterations %d)\n", mcMaxTime / (i), i);
-            printf("AVG min time  %g   (iterations %d)\n", mcMinTime / (i), i);
-            printf("AVG of AVG time  %g   (iterations %d)\n", mcAvgTime / (i), i);
-            printf("AVG count of supe  %g   (iterations %d)\n", countOfMc / (i), i);
+            printf("AVG min time  %g  (iterations %d)\n", mcMinTime / (i), i);
+            printf("AVG of AVG time  %g  (iterations %d)\n", mcAvgTime / (i), i);
+            printf("AVG count of soup  %g  (iterations %d)\n", countOfMc / (i), i);
             break;
         }
     }
 }
-
-
