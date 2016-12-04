@@ -99,7 +99,7 @@ public:
 
         test(Time -zzz );
         Wait(Uniform(10,20));
-        printf("Uvolnujem : %d\n ", indexActWaiter);
+      
         Release(waiters[indexActWaiter]);
         while(personsProcess.Length() > 0){
             personsProcess.GetFirst()->Activate();
@@ -362,9 +362,6 @@ class PreparedFoodWatchDog : public Event {
                    main_food->Activate();
                    
                 }
-    
-            } else {
-                printf("Dejem sa\n");
             }
             
         }
@@ -501,8 +498,51 @@ int main(){
         /*              EXPERIMENT 7                      */
         /* node  */
         /* -----------------------------------------------*/
-        case 7:
-            printf("7. Experiment starting ... ");
+        case 4:
+            for(int i = 0; i < 20; i++){
+                WAITERS_SIZE = 2;
+                HOW_MANY_PLATES_WAITER_GET = 2;
+                DIGITAL_MENU_SYSTEM = true;
+                IMPRUVE_FOOD_QUALITY = 60;
+                
+                restaurant.SetCapacity(30);
+                soupKitchen.SetCapacity(2 * 2);
+                mainCourseKitchen.SetCapacity(2 * 3);
+                
+                waiters = new Facility[WAITERS_SIZE];
+               
+                Init(0, 14400);
+                (new Generator)->Activate();
+                (new PreparedFoodWatchDog)->Activate();
+                Run();
+                
+                guestLife.Output();
+                printf("Beh %d\n", i);
+
+                for (int i = 0; i < WAITERS_SIZE; i++) {
+                    waiters[i].Clear();
+                }
+                waitForSoup.Clear();
+                waitForMainCourse.Clear();
+                orders.Clear();
+                peopleWait.Clear();
+                preparedSoups.Clear();
+                preparedMainCourses.Clear();
+
+                restaurant.Clear();
+                soupKitchen.Clear();
+                mainCourseKitchen.Clear();
+
+                waitingForMainCourse.Clear();
+                waitingForSoup.Clear();
+                waitingForPay.Clear();
+                waiter1.Clear();
+                waiter2.Clear();
+
+                guestLife.Clear();
+                test.Clear();
+            }
+            
 
 
 
@@ -519,20 +559,20 @@ int main(){
 
 
 
-    waiter1.Output();
-    waiter2.Output();
-    waitingForSoup.Output();
-    waitingForMainCourse.Output();
-    waitingForPay.Output();
-    guestLife.Output();
-    test.Output();
-    //kitchen.Output();
-    printf("Counter of prepared soups: %d\n", counterSoup);
-    printf("Counter of prepared main courses: %d\n", counterMainCourses);
-    printf("Counter of prepared drinks: %d\n", drinks);
-    printf("Leave people:  %d\n", counterLeavs);
-    printf("Profit:  %d\n", (counterSoup * 15) + (counterMainCourses * 70) + drinks * 30);
-    printf("%d\n", WAITERS_SIZE);
+    // waiter1.Output();
+    // waiter2.Output();
+    // waitingForSoup.Output();
+    // waitingForMainCourse.Output();
+    // waitingForPay.Output();
+    // guestLife.Output();
+    // test.Output();
+    // //kitchen.Output();
+    // printf("Counter of prepared soups: %d\n", counterSoup);
+    // printf("Counter of prepared main courses: %d\n", counterMainCourses);
+    // printf("Counter of prepared drinks: %d\n", drinks);
+    // printf("Leave people:  %d\n", counterLeavs);
+    // printf("Profit:  %d\n", (counterSoup * 15) + (counterMainCourses * 70) + drinks * 30);
+    // printf("%d\n", WAITERS_SIZE);
 
 
 
