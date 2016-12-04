@@ -498,27 +498,85 @@ int main(){
         /*              EXPERIMENT 7                      */
         /* node  */
         /* -----------------------------------------------*/
-        case 4:
-            for(int i = 0; i < 20; i++){
-                WAITERS_SIZE = 2;
-                HOW_MANY_PLATES_WAITER_GET = 2;
-                DIGITAL_MENU_SYSTEM = true;
-                IMPRUVE_FOOD_QUALITY = 60;
-                
-                restaurant.SetCapacity(30);
-                soupKitchen.SetCapacity(2 * 2);
-                mainCourseKitchen.SetCapacity(2 * 3);
-                
-                waiters = new Facility[WAITERS_SIZE];
+        case 4:{
+            double maxTimeInSystem = 0;
+            double minTimeInSystem = 0;
+            double avgTimeInSystem = 0;
+            double countOfPeoples = 0;
+
+            double supeMaxTime = 0;
+            double supeMinTime = 0;
+            double supeAvgTime = 0;
+            double countOfSupe = 0;
+
+            double mcMaxTime = 0;
+            double mcMinTime = 0;
+            double mcAvgTime = 0;
+            double countOfMc = 0;
+
+            double profit = 0;
+
+            double countOfDrinks = 0;
+
+
+
+
+          
+            int capacity ;
+            int countWaiters ;
+            int countCookers;
+            int countPlates;
+
+            printf("Enter capacity of restaurant (defalult value = 30): ");
+            capacity = input(30);
+            printf("Enter count of waiters in the restaurant (default value = 2): ");
+            countWaiters = input(2);
+            printf("Enter count of cookers in the kitchen (default value = 2): ");
+            countCookers = input(2);
+            printf("Enter count of plates, waiter can carry at the same time (default value = 2): ");
+            countPlates = input(2);
+            int i ;
+            for(i = 0; i < 20; i++){
                
+                
+                WAITERS_SIZE = countWaiters;
+
+                HOW_MANY_PLATES_WAITER_GET = countPlates;
+                DIGITAL_MENU_SYSTEM = false;
+                IMPRUVE_FOOD_QUALITY = 0;
+
+                restaurant.SetCapacity(capacity);
+                soupKitchen.SetCapacity(countCookers * 2);
+                mainCourseKitchen.SetCapacity(countCookers * 3);
+                waiters = new Facility[WAITERS_SIZE];
                 Init(0, 14400);
                 (new Generator)->Activate();
                 (new PreparedFoodWatchDog)->Activate();
                 Run();
-                
-                guestLife.Output();
-                printf("Beh %d\n", i);
 
+                maxTimeInSystem += guestLife.Max();
+                minTimeInSystem += guestLife.Min();
+                avgTimeInSystem += guestLife.Sum() /  guestLife.Number();
+                countOfPeoples += guestLife.Number(); 
+
+                supeMaxTime+= waitingForSoup.Max();
+                supeMinTime+= waitingForSoup.Min();
+                supeAvgTime+= waitingForSoup.Sum() / waitingForSoup.Number();
+                countOfSupe+= waitingForSoup.Number();
+
+                mcMaxTime+= waitingForMainCourse.Max();
+                mcMinTime+= waitingForMainCourse.Min();
+                mcAvgTime+= waitingForMainCourse.Sum() / waitingForMainCourse.Number();
+                countOfMc+= waitingForMainCourse.Number();
+
+                countOfDrinks += drinks;
+                profit +=  (waitingForSoup.Number() * 15) + (waitingForMainCourse.Number() * 70) + drinks * 30;
+
+
+                
+
+
+                drinks = 0;
                 for (int i = 0; i < WAITERS_SIZE; i++) {
                     waiters[i].Clear();
                 }
@@ -542,11 +600,36 @@ int main(){
                 guestLife.Clear();
                 test.Clear();
             }
+            printf("\n------------ AVG vaues OF SYSTEM -------------\n");
+            printf("AVG max time in system %g  (iterations %d)\n", maxTimeInSystem / (i+1), i);
+            printf("AVG min time in system %g   (iterations %d)\n", minTimeInSystem / (i+1), i);
+            printf("AVG of AVG time in system %g   (iterations %d)\n", avgTimeInSystem / (i+1), i);
+            printf("AVG count of people in system %g   (iterations %d)\n", countOfPeoples / (i+1), i);
+            printf("AVG drinks %g   (iterations %d)\n", countOfDrinks / (i+1), i);
+            printf("AVG profit %g   (iterations %d)\n", profit / (i+1), i);
+
+
+            printf("\n------------ AVG vaues waiting of supe -------------\n");
+            printf("AVG max time  %g  (iterations %d)\n", supeMaxTime / (i+1), i);
+            printf("AVG min time  %g   (iterations %d)\n", supeMinTime / (i+1), i);
+            printf("AVG of AVG time  %g   (iterations %d)\n", supeAvgTime / (i+1), i);
+            printf("AVG count of supe  %g   (iterations %d)\n", countOfSupe / (i+1), i);
+
+            printf("\n------------ AVG vaues waiting of main course -------------\n");
+            printf("AVG max time  %g  (iterations %d)\n", mcMaxTime / (i+1), i);
+            printf("AVG min time  %g   (iterations %d)\n", mcMinTime / (i+1), i);
+            printf("AVG of AVG time  %g   (iterations %d)\n", mcAvgTime / (i+1), i);
+            printf("AVG count of supe  %g   (iterations %d)\n", countOfMc / (i+1), i);
+
+
+
+         
             
 
 
 
             break;
+        }
         /* ---------------------------------------------- */
         /*              EXPERIMENT 8                      */
         /* node  */
