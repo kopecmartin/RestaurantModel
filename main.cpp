@@ -399,7 +399,7 @@ void printStat(){
 
 
 void printExperimentDescription(){
-    printf("Description of experiments:\n");
+    printf("\nDescription of experiments:\n");
     printf("Experiment number 0:\n");
     printf("  - Run simulation with real parameters of the restaurant\n");
     printf("Experiment number 1:\n");
@@ -407,6 +407,8 @@ void printExperimentDescription(){
     printf("Experiment number 2:\n");
     printf("  - Run\n");
     printf("Experiment number 3:\n");
+    printf("  - Run\n");
+    printf("Experiment number 4:\n");
     printf("  - Run\n");
 }
 
@@ -459,7 +461,7 @@ int main(){
             int countCookers;
             int countPlates;
 
-            printf("Enter capacity of restaurant (defalult value = 30): ");
+            printf("Enter capacity of the restaurant (defalult value = 30): ");
             capacity = input(30);
             printf("Enter count of waiters in the restaurant (default value = 2): ");
             countWaiters = input(2);
@@ -485,12 +487,12 @@ int main(){
             printStat();
             break;
 
-        /* ----------------------------------------------------- */
-        /*                    EXPERIMENT 2                       */
-        /* note: Experiment with changable restaurant parameters.*/
-        /*       The same as experiment 1 but with electronic    */
-        /*       ordering system.                                */
-        /* ----------------------------------------------------- */
+        /* ------------------------------------------------------ */
+        /*                      EXPERIMENT 2                      */
+        /* note: Experiment with restaurant parameters you choose.*/
+        /*       The same as experiment 1 but with electronic     */
+        /*       ordering system.                                 */
+        /* ------------------------------------------------------ */
         case 2:
             {
                 int capacity;
@@ -498,7 +500,7 @@ int main(){
                 int countCookers;
                 int countPlates;
 
-                printf("Enter capacity of restaurant (defalult value = 50): ");
+                printf("Enter capacity of the restaurant (defalult value = 50): ");
                 capacity = input(50);
                 printf("Enter count of waiters in the restaurant (default value = 3): ");
                 countWaiters = input(3);
@@ -530,34 +532,54 @@ int main(){
         /* note  */
         /* -----------------------------------------------*/
         case 3:
+            {
+                int expenses = 0;
+                //profit when digital ordering system is not used
+                int profitBefore = 0;
+
+
+
+                break;
+            }
+
+        /* ---------------------------------------------- */
+        /*              EXPERIMENT 4                      */
+        /* note  */
+        /* -----------------------------------------------*/
+        case 4:
         {
             double maxTimeInSystem = 0;
             double minTimeInSystem = 0;
             double avgTimeInSystem = 0;
-            double countOfPeoples = 0;
 
+            // counters of people
+            double countOfPeople = 0;
+            double countPeopleLeft = 0;
+
+            // counters of soups
             double soupMaxTime = 0;
             double soupMinTime = 0;
             double soupAvgTime = 0;
             double countOfSoup = 0;
 
+            // counters of main courses
             double mcMaxTime = 0;
             double mcMinTime = 0;
             double mcAvgTime = 0;
             double countOfMc = 0;
 
             double profit = 0;
-
             double countOfDrinks = 0;
-            double countPeopleLeft = 0;
+
 
             int capacity;
             int countWaiters;
             int countCookers;
             int countPlates;
             int repeatCount;
+            int digitalSystem;  // 1,0 => true, false
 
-            printf("Enter capacity of restaurant (defalult value = 30): ");
+            printf("Enter capacity of the restaurant (defalult value = 30): ");
             capacity = input(30);
             printf("Enter count of waiters in the restaurant (default value = 2): ");
             countWaiters = input(2);
@@ -567,20 +589,24 @@ int main(){
             countPlates = input(2);
             printf("Enter count of itreation (default value = 20): ");
             repeatCount = input(20);
+            printf("Enter 1 if you want to enable a digital ordering system (default = 0): ");
+            digitalSystem = input(0);
+
+
+            Init(0, 14400);
 
             int i;
             for(i = 0; i < repeatCount; i++){
 
                 WAITERS_SIZE = countWaiters;
                 HOW_MANY_PLATES_WAITER_GET = countPlates;
-                DIGITAL_MENU_SYSTEM = false;
+                DIGITAL_MENU_SYSTEM = digitalSystem;
 
                 restaurant.SetCapacity(capacity);
                 soupKitchen.SetCapacity(countCookers * 2);
                 mainCourseKitchen.SetCapacity(countCookers * 3);
                 waiters = new Facility[WAITERS_SIZE];
 
-                Init(0, 14400);
                 (new Generator)->Activate();
                 (new PreparedFoodWatchDog)->Activate();
                 Run();
@@ -589,7 +615,7 @@ int main(){
                 maxTimeInSystem += guestLife.Max();
                 minTimeInSystem += guestLife.Min();
                 avgTimeInSystem += guestLife.Sum() /  guestLife.Number();
-                countOfPeoples += guestLife.Number();
+                countOfPeople += guestLife.Number();
 
                 soupMaxTime+= waitingForSoup.Max();
                 soupMinTime+= waitingForSoup.Min();
@@ -612,6 +638,9 @@ int main(){
                 drinks = 0;
                 counterLeavs = 0;
 
+                // when statistics are cleared, they are initialized to Time ..
+                // therefor before .Clear() is needed to call Init(..)
+                Init(0, 14400);
                 for (int i = 0; i < WAITERS_SIZE; i++) {
                     waiters[i].Clear();
                 }
@@ -636,10 +665,10 @@ int main(){
             }
 
             printf("\n------------ AVG values OF SYSTEM -------------\n");
-            printf("AVG max time in system %g  (iterations %d)\n", maxTimeInSystem / (i), i);
-            printf("AVG min time in system %g  (iterations %d)\n", minTimeInSystem / (i), i);
-            printf("AVG of AVG time in system %g  (iterations %d)\n", avgTimeInSystem / (i), i);
-            printf("AVG count of people in system %g  (iterations %d)\n", countOfPeoples / (i), i);
+            printf("AVG max time in the system %g  (iterations %d)\n", maxTimeInSystem / (i), i);
+            printf("AVG min time in the system %g  (iterations %d)\n", minTimeInSystem / (i), i);
+            printf("AVG of AVG time in the system %g  (iterations %d)\n", avgTimeInSystem / (i), i);
+            printf("AVG count of people in the system %g  (iterations %d)\n", countOfPeople / (i), i);
             printf("AVG people who left %g  (iterations %d)\n", countPeopleLeft / (i), i);
             printf("AVG drinks %g  (iterations %d)\n", countOfDrinks / (i), i);
             printf("AVG profit %g  (iterations %d)\n", profit / (i), i);
