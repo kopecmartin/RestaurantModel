@@ -19,6 +19,8 @@ using namespace std;
 
 int WAITERS_SIZE;
 int HOW_MANY_PLATES_WAITER_GET;
+//true if a new ordering system is used in the restaurant
+//it's part of an experiment
 bool DIGITAL_MENU_SYSTEM;
 
 Facility *waiters;
@@ -46,28 +48,26 @@ class Guest;
 
 
 /**
- *
+ * Class represents preparing of food.
  */
 class Food : public Process {
 public:
-    bool manuallyActivate;
     bool isSoup;
     int indexActWaiter;
     Queue personsProcess;
 
     Food(bool soup) : Process() {
         isSoup = soup;
-        manuallyActivate = false;
     }
 
     void kitchen () {
         if (isSoup) {
             Enter(soupKitchen);
-            Wait(Uniform(15, 30));
+            Wait(Uniform(15, 30));   //time needed to prepare soup
             Leave(soupKitchen);
         } else {
             Enter(mainCourseKitchen);
-            Wait(Uniform(400, 500 ));
+            Wait(Uniform(400, 500 )); //time needed to prepare main course
             Leave(mainCourseKitchen);
         }
     }
@@ -96,7 +96,7 @@ public:
 
 
 /**
- *
+ * Class represents an order
  */
 class Order : public Process {
 public:
@@ -155,12 +155,15 @@ public:
 };
 
 
+/**
+ * Class represents a guest
+ */
 class Guest : public Process {
 public:
 
     /**
-    * Method represents the selected variant of menu
-    * @return Code of variant
+    * Method implements selecting a variant of menu
+    * @return Code of menu variant
     */
     int selectingFood(){
 
@@ -203,8 +206,8 @@ public:
     }
 
     /**
-     * [consumingFood description]
-     * @param foodCombo [description]
+     * Method implements behaviour of an eating guest
+     * @param foodCombo - choosen variant of the menu
      */
     void consumingFood(int foodCombo){
         if (!(foodCombo == 1)){
@@ -223,9 +226,6 @@ public:
         }
     }
 
-    /**
-     * [Behavior description]
-     */
     void Behavior() {
         int who;
         if( !restaurant.Full() ){
@@ -296,7 +296,9 @@ class Generator : public Event {
 
 
 /**
- *
+ * Class is watching prepartion of food (soup and main course),
+ * when food is prepared and a guest is waiting for food (soup or main course)
+ * class triggers handling of the situation
  */
 class PreparedFoodWatchDog : public Event {
 
@@ -307,25 +309,22 @@ class PreparedFoodWatchDog : public Event {
         Food * main_food;
 
         if (preparedSoups.Length() > 0 || preparedMainCourses.Length() > 0){
-            int minQLen = 100;
-            int noBusyW;
-            for (int i = 0; i < WAITERS_SIZE; i++) {
-                // printf("%d  ", waiters[i].QueueLen());
-                // printf("%d\n", i);
+            int minQLen = waiters[0].QueueLen();
+            int noBusyW = 0;
+
+            //find the least busy waiter
+            for (int i = 1; i < WAITERS_SIZE; i++) {
                 if((int) waiters[i].QueueLen() < minQLen){
                     minQLen = waiters[i].QueueLen();
                     noBusyW = i;
                 }
-
             }
-            //  printf("------------------------------\n");
-            // printf("minLen : %d\n", minQLen);
-            // printf("index : %d\n", noBusyW);
 
             if (minQLen < 3) {
                 int counter = 0;
+
+                //the waiter will get as many plates as he can
                 while (counter < HOW_MANY_PLATES_WAITER_GET){
-                    //printf(" Indesx %d\n",i );
                     if (preparedSoups.Length() > 0 && waitForSoup.Length() > 0){
                         if(counter == 0){
                             main_food = (Food *)preparedSoups.GetFirst();
@@ -363,9 +362,10 @@ class PreparedFoodWatchDog : public Event {
 
 
 /**
- * [input description]
- * @param  value [description]
- * @return       [description]
+ * Take input from a user
+ * if the user submits no value, use default
+ * @param  value - default value
+ * @return       - return user's or default value
  */
 int input(int value){
     string input;
@@ -378,9 +378,6 @@ int input(int value){
 }
 
 
-/**
- * [printStat description]
- */
 void printStat(){
 
     waiter1.Output();
@@ -399,17 +396,23 @@ void printStat(){
 
 
 void printExperimentDescription(){
-    printf("\nDescription of experiments:\n");
+    printf("\n--------------Description of experiments:--------------\n");
     printf("Experiment number 0:\n");
     printf("  - Run simulation with real parameters of the restaurant\n");
     printf("Experiment number 1:\n");
     printf("  - Run simulation with parameters you choose.\n");
     printf("Experiment number 2:\n");
-    printf("  - Run\n");
+    printf("  - Run simulation with parameters you choose.\n");
+    printf("      - enables new ordering system\n");
     printf("Experiment number 3:\n");
-    printf("  - Run\n");
+    printf("  - prints number of lunches after which\n");
+    printf("    the investment (new ordering system) would\n");
+    printf("    return\n");
+    printf("  - only profit higher than profit in experiment 0\n");
+    printf("    is taken into account\n");
     printf("Experiment number 4:\n");
-    printf("  - Run\n");
+    printf("  - Run simulation with optional repeats\n");
+    printf("      - statistics are more precise then\n");
 }
 
 
@@ -423,9 +426,6 @@ int main(){
 
     RandomSeed(time(NULL));
     srand(time(NULL));
-
-    //RandomSeed(Time(NULL));
-
 
     switch(experimentNumber){
         /* ---------------------------------------------- */
@@ -451,22 +451,22 @@ int main(){
             printStat();
             break;
 
-        /* ------------------------------------------------------- */
-        /*                     EXPERIMENT 1                        */
-        /* note: Experiment with restaurant parameters you choose. */
-        /* ------------------------------------------------------- */
+        /* -------------------------------------------------------  */
+        /*                     EXPERIMENT 1                         */
+        /* note: Experiment with restaurant parameters user choose. */
+        /* -------------------------------------------------------  */
         case 1:
             int capacity;
             int countWaiters;
-            int countCookers;
+            int countCooks;
             int countPlates;
 
             printf("Enter capacity of the restaurant (defalult value = 30): ");
             capacity = input(30);
             printf("Enter count of waiters in the restaurant (default value = 2): ");
             countWaiters = input(2);
-            printf("Enter count of cookers in the kitchen (default value = 2): ");
-            countCookers = input(2);
+            printf("Enter count of cooks in the kitchen (default value = 2): ");
+            countCooks = input(2);
             printf("Enter count of plates, waiter can carry at the same time (default value = 2): ");
             countPlates = input(2);
 
@@ -475,8 +475,8 @@ int main(){
             DIGITAL_MENU_SYSTEM = false;
 
             restaurant.SetCapacity(capacity);
-            soupKitchen.SetCapacity(countCookers * 2);
-            mainCourseKitchen.SetCapacity(countCookers * 3);
+            soupKitchen.SetCapacity(countCooks * 2);
+            mainCourseKitchen.SetCapacity(countCooks * 3);
             waiters = new Facility[WAITERS_SIZE];
 
             Init(0, 14400);
@@ -489,7 +489,7 @@ int main(){
 
         /* ------------------------------------------------------ */
         /*                      EXPERIMENT 2                      */
-        /* note: Experiment with restaurant parameters you choose.*/
+        /* note: Experiment with restaurant parameters user choose.*/
         /*       The same as experiment 1 but with electronic     */
         /*       ordering system.                                 */
         /* ------------------------------------------------------ */
@@ -497,15 +497,15 @@ int main(){
             {
                 int capacity;
                 int countWaiters;
-                int countCookers;
+                int countCooks;
                 int countPlates;
 
                 printf("Enter capacity of the restaurant (defalult value = 50): ");
                 capacity = input(50);
                 printf("Enter count of waiters in the restaurant (default value = 3): ");
                 countWaiters = input(3);
-                printf("Enter count of cookers in the kitchen (default value = 3): ");
-                countCookers = input(3);
+                printf("Enter count of cooks in the kitchen (default value = 3): ");
+                countCooks = input(3);
                 printf("Enter count of plates, waiter can carry at the same time (default value = 3): ");
                 countPlates = input(3);
 
@@ -514,8 +514,8 @@ int main(){
                 DIGITAL_MENU_SYSTEM = true;
 
                 restaurant.SetCapacity(capacity);
-                soupKitchen.SetCapacity(countCookers * 2);
-                mainCourseKitchen.SetCapacity(countCookers * 3);
+                soupKitchen.SetCapacity(countCooks * 2);
+                mainCourseKitchen.SetCapacity(countCooks * 3);
                 waiters = new Facility[WAITERS_SIZE];
 
                 Init(0, 14400);
@@ -527,25 +527,109 @@ int main(){
                 break;
             }
 
-        /* ---------------------------------------------- */
-        /*              EXPERIMENT 3                      */
-        /* note  */
-        /* -----------------------------------------------*/
+        /* ----------------------------------------------  */
+        /*                EXPERIMENT 3                     */
+        /* note: Experiment prints number of lunches after */
+        /*       which an investment would return.         */
+        /* note: Only profit higher than profit in normal state */
+        /*       (case 0) is taken into account            */
+        /* ----------------------------------------------- */
         case 3:
             {
-                int expenses = 0;
-                //profit when digital ordering system is not used
-                int profitBefore = 0;
+                // price of tablets
+                int expenses = 50000;
+                // profit when digital ordering system is not used
+                int profitBefore = 15253;
+
+                // salary during lunch time = 4 hours
+                int waiterSalary = 90 * 4;
+                int cookSalary =102 * 4;
+                int staffSalary = 0; //sum of staff salary
+
+                int loop = 0;
+                int oneLoopProfit = 0;
+
+                int countCooks = 3;
+                WAITERS_SIZE = 3;
+                HOW_MANY_PLATES_WAITER_GET = 3;
+                DIGITAL_MENU_SYSTEM = true;
+
+                //count day (4 hours = lunch time) staff salary
+                //we are gonna take into account only situations when
+                //number of staff is different against the normal state (case 0)
+                //so that we can find out if hire or fire a staff member
+                //is more profitable or not
+                if (WAITERS_SIZE == 1) { staffSalary -= waiterSalary; }
+                else if (WAITERS_SIZE > 2) {
+                    staffSalary += waiterSalary * (WAITERS_SIZE - 2);
+                }
+
+                if (countCooks == 1) { staffSalary -= cookSalary; }
+                else if (countCooks > 2) {
+                    staffSalary += cookSalary * (countCooks - 2);
+                }
 
 
+                restaurant.SetCapacity(50);
+                soupKitchen.SetCapacity(countCooks * 2);
+                mainCourseKitchen.SetCapacity(countCooks * 3);
 
+                Init(0, 14400);
+
+                while(expenses > 0) {
+
+                    waiters = new Facility[WAITERS_SIZE];
+
+                    (new Generator)->Activate();
+                    (new PreparedFoodWatchDog)->Activate();
+                    Run();
+
+                    oneLoopProfit += waitingForSoup.Number() * 15;
+                    oneLoopProfit += waitingForMainCourse.Number() * 70;
+                    oneLoopProfit += drinks * 30;
+
+
+                    //one day profit minus staffSalary - profit in normal state
+                    expenses -= (oneLoopProfit - staffSalary - profitBefore);
+                    oneLoopProfit = 0;
+                    loop += 1;
+
+
+                    // when statistics are cleared, they are initialized to Time ..
+                    // therefor before .Clear() is needed to call Init(..)
+                    Init(0, 14400);
+                    for (int i = 0; i < WAITERS_SIZE; i++) {
+                        waiters[i].Clear();
+                    }
+
+                    waitForSoup.Clear();
+                    waitForMainCourse.Clear();
+                    preparedSoups.Clear();
+                    preparedMainCourses.Clear();
+                    restaurant.Clear();
+                    soupKitchen.Clear();
+                    mainCourseKitchen.Clear();
+
+                    waitingForMainCourse.Clear();
+                    waitingForSoup.Clear();
+                    waitingForPay.Clear();
+                    waiter1.Clear();
+                    waiter2.Clear();
+
+                    guestLife.Clear();
+                }
+
+                printf("\n--------------------RESULT-------------------\n");
+                printf("Investment will return in: %d lunch times\n\n", loop);
                 break;
             }
 
-        /* ---------------------------------------------- */
-        /*              EXPERIMENT 4                      */
-        /* note  */
-        /* -----------------------------------------------*/
+        /* -------------------------------------------------- */
+        /*                  EXPERIMENT 4                      */
+        /* note: Experiment allows you to run actually case 2 */
+        /*       with optional number of repeats statistics   */
+        /*       are more precise then                        */
+        /* ---------------------------------------------------*/
         case 4:
         {
             double maxTimeInSystem = 0;
@@ -574,7 +658,7 @@ int main(){
 
             int capacity;
             int countWaiters;
-            int countCookers;
+            int countCooks;
             int countPlates;
             int repeatCount;
             int digitalSystem;  // 1,0 => true, false
@@ -583,8 +667,8 @@ int main(){
             capacity = input(30);
             printf("Enter count of waiters in the restaurant (default value = 2): ");
             countWaiters = input(2);
-            printf("Enter count of cookers in the kitchen (default value = 2): ");
-            countCookers = input(2);
+            printf("Enter count of cooks in the kitchen (default value = 2): ");
+            countCooks = input(2);
             printf("Enter count of plates, waiter can carry at the same time (default value = 2): ");
             countPlates = input(2);
             printf("Enter count of itreation (default value = 20): ");
@@ -593,18 +677,20 @@ int main(){
             digitalSystem = input(0);
 
 
+            WAITERS_SIZE = countWaiters;
+            HOW_MANY_PLATES_WAITER_GET = countPlates;
+            DIGITAL_MENU_SYSTEM = digitalSystem;
+
+            restaurant.SetCapacity(capacity);
+            soupKitchen.SetCapacity(countCooks * 2);
+            mainCourseKitchen.SetCapacity(countCooks * 3);
+
+
             Init(0, 14400);
 
             int i;
             for(i = 0; i < repeatCount; i++){
 
-                WAITERS_SIZE = countWaiters;
-                HOW_MANY_PLATES_WAITER_GET = countPlates;
-                DIGITAL_MENU_SYSTEM = digitalSystem;
-
-                restaurant.SetCapacity(capacity);
-                soupKitchen.SetCapacity(countCookers * 2);
-                mainCourseKitchen.SetCapacity(countCookers * 3);
                 waiters = new Facility[WAITERS_SIZE];
 
                 (new Generator)->Activate();
@@ -673,18 +759,17 @@ int main(){
             printf("AVG drinks %g  (iterations %d)\n", countOfDrinks / (i), i);
             printf("AVG profit %g  (iterations %d)\n", profit / (i), i);
 
-
             printf("\n------------ AVG values waiting of soup -------------\n");
             printf("AVG max time  %g  (iterations %d)\n", soupMaxTime / (i), i);
             printf("AVG min time  %g  (iterations %d)\n", soupMinTime / (i), i);
             printf("AVG of AVG time  %g  (iterations %d)\n", soupAvgTime / (i), i);
-            printf("AVG count of soup  %g  (iterations %d)\n", countOfSoup / (i), i);
+            printf("AVG count of soups  %g  (iterations %d)\n", countOfSoup / (i), i);
 
             printf("\n------------ AVG values waiting of main course -------------\n");
             printf("AVG max time  %g  (iterations %d)\n", mcMaxTime / (i), i);
             printf("AVG min time  %g  (iterations %d)\n", mcMinTime / (i), i);
             printf("AVG of AVG time  %g  (iterations %d)\n", mcAvgTime / (i), i);
-            printf("AVG count of soup  %g  (iterations %d)\n", countOfMc / (i), i);
+            printf("AVG count of main courses  %g  (iterations %d)\n", countOfMc / (i), i);
             break;
         }
     }
