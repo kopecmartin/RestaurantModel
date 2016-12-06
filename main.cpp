@@ -398,21 +398,123 @@ void printStat(){
 void printExperimentDescription(){
     printf("\n--------------Description of experiments:--------------\n");
     printf("Experiment number 0:\n");
-    printf("  - Run simulation with real parameters of the restaurant\n");
+    printf("  - Run simulation with real parameters of the restaurant\n\n");
     printf("Experiment number 1:\n");
-    printf("  - Run simulation with parameters you choose.\n");
+    printf("  - Run simulation with parameters you choose.\n\n");
     printf("Experiment number 2:\n");
     printf("  - Run simulation with parameters you choose.\n");
-    printf("      - enables new ordering system\n");
+    printf("      - enables new ordering system\n\n");
     printf("Experiment number 3:\n");
-    printf("  - prints number of lunches after which\n");
-    printf("    the investment (new ordering system) would\n");
-    printf("    return\n");
+    printf("  - prints number of lunches after which the investment\n");
+    printf("    (new ordering system) would return\n");
     printf("  - only profit higher than profit in experiment 0\n");
     printf("    is taken into account\n");
+    printf("  - parameters from experiment 0 and 30 tablets\n\n");
     printf("Experiment number 4:\n");
+    printf("  - the same as number 3, but tablets = 50, capacity = 50\n");
+    printf("    waiters = 3, cooks = 3, plates = 3\n\n");
+    printf("Experiment number 5:\n");
     printf("  - Run simulation with optional repeats\n");
-    printf("      - statistics are more precise then\n");
+    printf("      - statistics are more precise then\n\n");
+}
+
+
+/**
+ * Experiment prints number of lunches after which an investment would return.
+ * note: Only profit higher than profit in normal state (case 0) is taken into account
+ * @param  numberT    number of tables
+ * @param  capacity   capacity of the restaurant
+ * @param  countCooks number of cooks
+ * @param  waiters    number of waiters
+ * @param  plates     number of plates waiter can carry at the same time
+ * @return            [description]
+ */
+int investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersNum, int plates){
+
+    int tabletPrice = 1499;
+    // price of tablets
+    int expenses = tabletPrice * numberT;
+    // profit when digital ordering system is not used, case 0
+    int profitBefore = 15253;
+
+    // salary during lunch time = 4 hours
+    int waiterSalary = 90 * 4;
+    int cookSalary =102 * 4;
+    int staffSalary = 0; //sum of staff salary
+
+    int loop = 0;
+    int oneLoopProfit = 0;
+
+    WAITERS_SIZE = waitersNum;
+    HOW_MANY_PLATES_WAITER_GET = plates;
+    DIGITAL_MENU_SYSTEM = true;
+
+    //count day (4 hours = lunch time) staff salary
+    //we are gonna take into account only situations when
+    //number of staff is different against the normal state (case 0)
+    //so that we can find out if hire or fire a staff member
+    //is more profitable or not
+    if (WAITERS_SIZE == 1) { staffSalary -= waiterSalary; }
+    else if (WAITERS_SIZE > 2) {
+        staffSalary += waiterSalary * (WAITERS_SIZE - 2);
+    }
+
+    if (countCooks == 1) { staffSalary -= cookSalary; }
+    else if (countCooks > 2) {
+        staffSalary += cookSalary * (countCooks - 2);
+    }
+
+
+    restaurant.SetCapacity(capacity);
+    soupKitchen.SetCapacity(countCooks * 2);
+    mainCourseKitchen.SetCapacity(countCooks * 3);
+
+    Init(0, 14400);
+
+    while(expenses > 0) {
+
+        waiters = new Facility[WAITERS_SIZE];
+
+        (new Generator)->Activate();
+        (new PreparedFoodWatchDog)->Activate();
+        Run();
+
+        oneLoopProfit += waitingForSoup.Number() * 15;
+        oneLoopProfit += waitingForMainCourse.Number() * 70;
+        oneLoopProfit += drinks * 30;
+
+
+        //one day profit minus staffSalary - profit in normal state
+        expenses -= (oneLoopProfit - staffSalary - profitBefore);
+        oneLoopProfit = 0;
+        loop += 1;
+
+
+        // when statistics are cleared, they are initialized to Time ..
+        // therefor before .Clear() is needed to call Init(..)
+        Init(0, 14400);
+        for (int i = 0; i < WAITERS_SIZE; i++) {
+            waiters[i].Clear();
+        }
+
+        waitForSoup.Clear();
+        waitForMainCourse.Clear();
+        preparedSoups.Clear();
+        preparedMainCourses.Clear();
+        restaurant.Clear();
+        soupKitchen.Clear();
+        mainCourseKitchen.Clear();
+
+        waitingForMainCourse.Clear();
+        waitingForSoup.Clear();
+        waitingForPay.Clear();
+        waiter1.Clear();
+        waiter2.Clear();
+
+        guestLife.Clear();
+    }
+
+    return loop;
 }
 
 
@@ -536,101 +638,45 @@ int main(){
         /* ----------------------------------------------- */
         case 3:
             {
-                // price of tablets
-                int expenses = 50000;
-                // profit when digital ordering system is not used
-                int profitBefore = 15253;
-
-                // salary during lunch time = 4 hours
-                int waiterSalary = 90 * 4;
-                int cookSalary =102 * 4;
-                int staffSalary = 0; //sum of staff salary
-
-                int loop = 0;
-                int oneLoopProfit = 0;
-
-                int countCooks = 3;
-                WAITERS_SIZE = 3;
-                HOW_MANY_PLATES_WAITER_GET = 3;
-                DIGITAL_MENU_SYSTEM = true;
-
-                //count day (4 hours = lunch time) staff salary
-                //we are gonna take into account only situations when
-                //number of staff is different against the normal state (case 0)
-                //so that we can find out if hire or fire a staff member
-                //is more profitable or not
-                if (WAITERS_SIZE == 1) { staffSalary -= waiterSalary; }
-                else if (WAITERS_SIZE > 2) {
-                    staffSalary += waiterSalary * (WAITERS_SIZE - 2);
-                }
-
-                if (countCooks == 1) { staffSalary -= cookSalary; }
-                else if (countCooks > 2) {
-                    staffSalary += cookSalary * (countCooks - 2);
-                }
-
-
-                restaurant.SetCapacity(50);
-                soupKitchen.SetCapacity(countCooks * 2);
-                mainCourseKitchen.SetCapacity(countCooks * 3);
-
-                Init(0, 14400);
-
-                while(expenses > 0) {
-
-                    waiters = new Facility[WAITERS_SIZE];
-
-                    (new Generator)->Activate();
-                    (new PreparedFoodWatchDog)->Activate();
-                    Run();
-
-                    oneLoopProfit += waitingForSoup.Number() * 15;
-                    oneLoopProfit += waitingForMainCourse.Number() * 70;
-                    oneLoopProfit += drinks * 30;
-
-
-                    //one day profit minus staffSalary - profit in normal state
-                    expenses -= (oneLoopProfit - staffSalary - profitBefore);
-                    oneLoopProfit = 0;
-                    loop += 1;
-
-
-                    // when statistics are cleared, they are initialized to Time ..
-                    // therefor before .Clear() is needed to call Init(..)
-                    Init(0, 14400);
-                    for (int i = 0; i < WAITERS_SIZE; i++) {
-                        waiters[i].Clear();
-                    }
-
-                    waitForSoup.Clear();
-                    waitForMainCourse.Clear();
-                    preparedSoups.Clear();
-                    preparedMainCourses.Clear();
-                    restaurant.Clear();
-                    soupKitchen.Clear();
-                    mainCourseKitchen.Clear();
-
-                    waitingForMainCourse.Clear();
-                    waitingForSoup.Clear();
-                    waitingForPay.Clear();
-                    waiter1.Clear();
-                    waiter2.Clear();
-
-                    guestLife.Clear();
-                }
+                //number of tablets = 30
+                //capacity = 30
+                //cooks = 2
+                //waiters = 2
+                //plates at the same time = 2
+                int loops = investmentReturnsIn(30, 30, 2, 2, 2);
 
                 printf("\n--------------------RESULT-------------------\n");
-                printf("Investment will return in: %d lunch times\n\n", loop);
+                printf("Investment will return in: %d lunch times\n\n", loops);
                 break;
             }
 
+        /* ----------------------------------------------  */
+        /*                EXPERIMENT 3                     */
+        /* note: Experiment prints number of lunches after */
+        /*       which an investment would return.         */
+        /* note: Only profit higher than profit in normal state */
+        /*       (case 0) is taken into account            */
+        /* ----------------------------------------------- */
+        case 4:
+            {
+                //number of tablets = 50
+                //capacity = 50
+                //cooks = 3
+                //waiters = 3
+                //plates at the same time = 3
+                int loops = investmentReturnsIn(50, 50, 3, 3, 3);
+
+                printf("\n--------------------RESULT-------------------\n");
+                printf("Investment will return in: %d lunch times\n\n", loops);
+                break;
+            }
         /* -------------------------------------------------- */
-        /*                  EXPERIMENT 4                      */
+        /*                  EXPERIMENT 5                      */
         /* note: Experiment allows you to run actually case 2 */
         /*       with optional number of repeats statistics   */
         /*       are more precise then                        */
         /* ---------------------------------------------------*/
-        case 4:
+        case 5:
         {
             double maxTimeInSystem = 0;
             double minTimeInSystem = 0;
