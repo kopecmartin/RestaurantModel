@@ -438,11 +438,6 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
     printf("Original test without tablets, capacity 30, waiters = cooks = plates = 2\n");
     printf("Original profit: %d\n", profitBefore);
 
-    // salary during lunch time = 4 hours
-    int waiterSalary = 90 * 4;
-    int cookSalary =102 * 4;
-    int staffSalary = 0; //sum of staff salary
-
     int loop = 0;
     int oneLoopProfit = 0;
     double profitAVG = 0;
@@ -450,22 +445,6 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
     WAITERS_SIZE = waitersNum;
     HOW_MANY_PLATES_WAITER_GET = plates;
     DIGITAL_MENU_SYSTEM = true;
-
-    //count day (4 hours = lunch time) staff salary
-    //we are gonna take into account only situations when
-    //number of staff is different against the normal state (case 0)
-    //so that we can find out if hire or fire a staff member
-    //is more profitable or not
-    if (WAITERS_SIZE == 1) { staffSalary -= waiterSalary; }
-    else if (WAITERS_SIZE > 2) {
-        staffSalary += waiterSalary * (WAITERS_SIZE - 2);
-    }
-
-    if (countCooks == 1) { staffSalary -= cookSalary; }
-    else if (countCooks > 2) {
-        staffSalary += cookSalary * (countCooks - 2);
-    }
-
 
     restaurant.SetCapacity(capacity);
     soupKitchen.SetCapacity(countCooks * 2);
@@ -485,9 +464,11 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
         oneLoopProfit += waitingForMainCourse.Number() * 70;
         oneLoopProfit += drinks * 30;
 
-        //one day profit minus staffSalary - profit in normal state
-        expenses -= (oneLoopProfit - staffSalary - profitBefore);
+        // one day profit minus profit in normal state minus taxes
+        oneLoopProfit = oneLoopProfit - profitBefore;
+        oneLoopProfit = oneLoopProfit * 0.3; // 70% = taxes
         profitAVG += oneLoopProfit;
+        expenses -= oneLoopProfit;
         oneLoopProfit = 0;
         loop += 1;
 
@@ -498,7 +479,7 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
         for (int i = 0; i < WAITERS_SIZE; i++) {
             waiters[i].Clear();
         }
-        
+
         drinks = 0;
         waitForSoup.Clear();
         waitForMainCourse.Clear();
@@ -518,8 +499,7 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
     }
 
     printf("\n--------------------RESULTS-------------------\n");
-    printf("Average profit: %g\n", profitAVG / loop);
-    printf("Average profit over original one: %g\n", profitAVG / loop - profitBefore);
+    printf("Average profit over profit before investment (taxes paid): %g\n", profitAVG / loop);
     printf("Investment will return in: %d lunch times\n\n", loop);
 }
 
@@ -640,7 +620,7 @@ int main(){
         /* note: Experiment prints number of lunches after */
         /*       which an investment would return.         */
         /* note: Only profit higher than profit in normal state */
-        /*       (case 0) is taken into account            */
+        /*       (case 0) is taken into account - taxes    */
         /* ----------------------------------------------- */
         case 3:
             {
