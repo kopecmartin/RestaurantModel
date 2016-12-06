@@ -408,11 +408,7 @@ void printExperimentDescription(){
     printf("  - prints number of lunches after which the investment\n");
     printf("    (new ordering system) would return\n");
     printf("  - only profit higher than profit in experiment 0\n");
-    printf("    is taken into account\n");
-    printf("  - parameters from experiment 0 and 30 tablets\n\n");
-    printf("Experiment number 4:\n");
-    printf("  - the same as number 3, but tablets = 50, capacity = 50\n");
-    printf("    waiters = 3, cooks = 3, plates = 3\n\n");
+    printf("    is taken into account\n\n");
     printf("Experiment number 5:\n");
     printf("  - Run simulation with optional repeats\n");
     printf("      - statistics are more precise then\n\n");
@@ -420,22 +416,27 @@ void printExperimentDescription(){
 
 
 /**
- * Experiment prints number of lunches after which an investment would return.
+ * Experiment calculates number of lunches after which an investment would return.
  * note: Only profit higher than profit in normal state (case 0) is taken into account
  * @param  numberT    number of tables
  * @param  capacity   capacity of the restaurant
  * @param  countCooks number of cooks
  * @param  waiters    number of waiters
  * @param  plates     number of plates waiter can carry at the same time
- * @return            [description]
  */
-int investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersNum, int plates){
+void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersNum, int plates){
 
     int tabletPrice = 1499;
     // price of tablets
     int expenses = tabletPrice * numberT;
     // profit when digital ordering system is not used, case 0
     int profitBefore = 15253;
+
+    printf("\n-----------------SIMULATION------------------\n");
+    printf("Number of tablets: %d\nPrice for each: %d\n", numberT, tabletPrice);
+    printf("Total investment: %d\n", expenses);
+    printf("Original test without tablets, capacity 30, waiters = cooks = plates = 2\n");
+    printf("Original profit: %d\n", profitBefore);
 
     // salary during lunch time = 4 hours
     int waiterSalary = 90 * 4;
@@ -444,6 +445,7 @@ int investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersNu
 
     int loop = 0;
     int oneLoopProfit = 0;
+    double profitAVG = 0;
 
     WAITERS_SIZE = waitersNum;
     HOW_MANY_PLATES_WAITER_GET = plates;
@@ -486,6 +488,7 @@ int investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersNu
 
         //one day profit minus staffSalary - profit in normal state
         expenses -= (oneLoopProfit - staffSalary - profitBefore);
+        profitAVG += oneLoopProfit;
         oneLoopProfit = 0;
         loop += 1;
 
@@ -514,7 +517,10 @@ int investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersNu
         guestLife.Clear();
     }
 
-    return loop;
+    printf("\n--------------------RESULTS-------------------\n");
+    printf("Average profit: %g\n", profitAVG / loop);
+    printf("Average profit over original one: %g\n", profitAVG / loop - profitBefore);
+    printf("Investment will return in: %d lunch times\n\n", loop);
 }
 
 
@@ -638,45 +644,38 @@ int main(){
         /* ----------------------------------------------- */
         case 3:
             {
-                //number of tablets = 30
-                //capacity = 30
-                //cooks = 2
-                //waiters = 2
-                //plates at the same time = 2
-                int loops = investmentReturnsIn(30, 30, 2, 2, 2);
+                int capacity;
+                int countWaiters;
+                int countCooks;
+                int countPlates;
+                int countTablets;
 
-                printf("\n--------------------RESULT-------------------\n");
-                printf("Investment will return in: %d lunch times\n\n", loops);
+                printf("Enter capacity of the restaurant (defalult value = 30): ");
+                capacity = input(30);
+                printf("Enter count of waiters in the restaurant (default value = 2): ");
+                countWaiters = input(2);
+                printf("Enter count of cooks in the kitchen (default value = 2): ");
+                countCooks = input(2);
+                printf("Enter count of plates, waiter can carry at the same time (default value = 2): ");
+                countPlates = input(2);
+                printf("Enter count of tablets (default value = 30): ");
+                countTablets = input(30);
+
+                investmentReturnsIn(countTablets,
+                                    capacity,
+                                    countCooks,
+                                    countWaiters,
+                                    countPlates);
                 break;
             }
 
-        /* ----------------------------------------------  */
-        /*                EXPERIMENT 3                     */
-        /* note: Experiment prints number of lunches after */
-        /*       which an investment would return.         */
-        /* note: Only profit higher than profit in normal state */
-        /*       (case 0) is taken into account            */
-        /* ----------------------------------------------- */
-        case 4:
-            {
-                //number of tablets = 50
-                //capacity = 50
-                //cooks = 3
-                //waiters = 3
-                //plates at the same time = 3
-                int loops = investmentReturnsIn(50, 50, 3, 3, 3);
-
-                printf("\n--------------------RESULT-------------------\n");
-                printf("Investment will return in: %d lunch times\n\n", loops);
-                break;
-            }
         /* -------------------------------------------------- */
-        /*                  EXPERIMENT 5                      */
+        /*                  EXPERIMENT 4                      */
         /* note: Experiment allows you to run actually case 2 */
         /*       with optional number of repeats statistics   */
         /*       are more precise then                        */
         /* ---------------------------------------------------*/
-        case 5:
+        case 4:
         {
             double maxTimeInSystem = 0;
             double minTimeInSystem = 0;
