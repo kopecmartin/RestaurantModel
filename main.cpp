@@ -409,7 +409,7 @@ void printExperimentDescription(){
     printf("    (new ordering system) would return\n");
     printf("  - only profit higher than profit in experiment 0\n");
     printf("    is taken into account\n\n");
-    printf("Experiment number 5:\n");
+    printf("Experiment number 4:\n");
     printf("  - Run simulation with optional repeats\n");
     printf("      - statistics are more precise then\n\n");
 }
@@ -485,7 +485,6 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
         oneLoopProfit += waitingForMainCourse.Number() * 70;
         oneLoopProfit += drinks * 30;
 
-
         //one day profit minus staffSalary - profit in normal state
         expenses -= (oneLoopProfit - staffSalary - profitBefore);
         profitAVG += oneLoopProfit;
@@ -499,7 +498,8 @@ void investmentReturnsIn(int numberT, int capacity, int countCooks, int waitersN
         for (int i = 0; i < WAITERS_SIZE; i++) {
             waiters[i].Clear();
         }
-
+        
+        drinks = 0;
         waitForSoup.Clear();
         waitForMainCourse.Clear();
         preparedSoups.Clear();
